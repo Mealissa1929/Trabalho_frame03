@@ -6,8 +6,9 @@ body.appendChild(canvas);
 
 const ctx = canvas.getContext("2d");
 const arco = document.getElementsByTagName("arco");
+const retangulo = document.getElementsByTagName("retangulo");
 
-const objArco = {
+const objFormas = {
     velocidade: 3,
 
     desenhar: function () {
@@ -15,8 +16,8 @@ const objArco = {
         let lista = [];
 
         for (let a of arco) {
-
-            let obj = {
+            lista.push({
+                tipo: "arco",
                 el: a,
                 x: parseInt(a.getAttribute("posX")) || 100,
                 y: parseInt(a.getAttribute("posY")) || 100,
@@ -24,12 +25,32 @@ const objArco = {
                 cor: a.getAttribute("cor") || "blue",
                 mover: a.getAttribute("mover"),
                 comportamento: a.getAttribute("comportamento")
-            };
+            });
+        }
 
-            lista.push(obj);
+        for (let r of retangulo) {
+            lista.push({
+                tipo: "retangulo",
+                el: r,
+                x: parseInt(r.getAttribute("posX")) || 100,
+                y: parseInt(r.getAttribute("posY")) || 100,
+                largura: parseInt(r.getAttribute("largura")) || 50,
+                altura: parseInt(r.getAttribute("altura")) || 50,
+                cor: r.getAttribute("cor") || "black",
+                mover: r.getAttribute("mover"),
+                comportamento: r.getAttribute("comportamento")
+            });
+        }
 
+        for (let obj of lista) {
             ctx.beginPath();
-            ctx.arc(obj.x, obj.y, obj.raio, 0, Math.PI * 2);
+
+            if (obj.tipo === "arco") {
+                ctx.arc(obj.x, obj.y, obj.raio, 0, Math.PI * 2);
+            } else {
+                ctx.rect(obj.x, obj.y, obj.largura, obj.altura);
+            }
+
             ctx.fillStyle = obj.cor;
             ctx.fill();
             ctx.closePath();
@@ -41,14 +62,33 @@ const objArco = {
                 let a = lista[i];
                 let b = lista[j];
 
-                if (!mesmaOrientacao(a.mover, b.mover)) continue;
+                let podeColidir = true;
 
-                let dx = a.x - b.x;
-                let dy = a.y - b.y;
-                let distancia = Math.sqrt(dx * dx + dy * dy);
+                if (a.tipo !== b.tipo) {
+                    if (!mesmaOrientacao(a.mover, b.mover)) {
+                        podeColidir = false;
+                    }
+                }
 
-                if (distancia < a.raio + b.raio) {
+                if (!podeColidir) continue;
 
+                let colidiu = false;
+
+                if (a.tipo === "arco" && b.tipo === "arco") {
+                    let dx = a.x - b.x;
+                    let dy = a.y - b.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+                    colidiu = dist < a.raio + b.raio;
+                } else {
+                    colidiu = (
+                        a.x < b.x + (b.largura || b.raio) &&
+                        a.x + (a.largura || a.raio) > b.x &&
+                        a.y < b.y + (b.altura || b.raio) &&
+                        a.y + (a.altura || a.raio) > b.y
+                    );
+                }
+
+                if (colidiu) {
                     aplicarComportamento(a);
                     aplicarComportamento(b);
 
@@ -101,30 +141,36 @@ function mesmaOrientacao(d1, d2) {
 
 function aplicarComportamento(obj) {
     if (obj.comportamento === "duplicar") {
-        criarArco();
-        criarArco();
+        criarForma(obj.tipo);
+        criarForma(obj.tipo);
     }
 
     if (obj.comportamento === "dividir") {
-        criarArco();
+        criarForma(obj.tipo);
     }
 }
 
-function criarArco() {
-    let novo = document.createElement("arco");
+function criarForma(tipo) {
+    let novo = document.createElement(tipo);
 
     novo.setAttribute("posX", 100);
     novo.setAttribute("posY", 100);
-    novo.setAttribute("raio", 20);
     novo.setAttribute("cor", "green");
     novo.setAttribute("mover", "direita");
+
+    if (tipo === "arco") {
+        novo.setAttribute("raio", 20);
+    } else {
+        novo.setAttribute("largura", 50);
+        novo.setAttribute("altura", 50);
+    }
 
     document.body.appendChild(novo);
 }
 
 function desenharFormas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    objArco.desenhar();
+    objFormas.desenhar();
     requestAnimationFrame(desenharFormas);
 }
 
