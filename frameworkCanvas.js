@@ -89,11 +89,29 @@ const objFormas = {
                 }
 
                 if (colidiu) {
-                    aplicarComportamento(a);
-                    aplicarComportamento(b);
+                    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    let distancia = Math.sqrt(dx * dx + dy * dy) || 1;
 
-                    a.el.setAttribute("mover", inverter(a.mover));
-                    b.el.setAttribute("mover", inverter(b.mover));
+    let tamanhoA = a.raio || a.largura;
+    let tamanhoB = b.raio || b.largura;
+
+    let sobreposicao = tamanhoA + tamanhoB - distancia;
+
+    let ajusteX = (dx / distancia) * sobreposicao / 2;
+    let ajusteY = (dy / distancia) * sobreposicao / 2;
+
+    a.el.setAttribute("posX", a.x - ajusteX);
+    a.el.setAttribute("posY", a.y - ajusteY);
+
+    b.el.setAttribute("posX", b.x + ajusteX);
+    b.el.setAttribute("posY", b.y + ajusteY);
+
+    aplicarComportamento(a);
+    aplicarComportamento(b);
+
+    a.el.setAttribute("mover", inverter(a.mover));
+    b.el.setAttribute("mover", inverter(b.mover));
                 }
             }
         }
