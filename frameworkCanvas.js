@@ -24,7 +24,8 @@ const objFormas = {
                 raio: parseInt(a.getAttribute("raio")) || 50,
                 cor: a.getAttribute("cor") || "blue",
                 mover: a.getAttribute("mover"),
-                comportamento: a.getAttribute("comportamento")
+                comportamento: a.getAttribute("comportamento"),
+                colidindo: false
             });
         }
 
@@ -38,7 +39,8 @@ const objFormas = {
                 altura: parseInt(r.getAttribute("altura")) || 50,
                 cor: r.getAttribute("cor") || "black",
                 mover: r.getAttribute("mover"),
-                comportamento: r.getAttribute("comportamento")
+                comportamento: r.getAttribute("comportamento"),
+                colidindo: false
             });
         }
 
@@ -88,30 +90,34 @@ const objFormas = {
                     );
                 }
 
-                if (colidiu) {
+                if (colidiu && !a.colidindo && !b.colidindo) {
+
                     let dx = b.x - a.x;
-    let dy = b.y - a.y;
-    let distancia = Math.sqrt(dx * dx + dy * dy) || 1;
+                    let dy = b.y - a.y;
+                    let distancia = Math.sqrt(dx * dx + dy * dy) || 1;
 
-    let tamanhoA = a.raio || a.largura;
-    let tamanhoB = b.raio || b.largura;
+                    let tamanhoA = a.raio || a.largura;
+                    let tamanhoB = b.raio || b.largura;
 
-    let sobreposicao = tamanhoA + tamanhoB - distancia;
+                    let sobreposicao = tamanhoA + tamanhoB - distancia;
 
-    let ajusteX = (dx / distancia) * sobreposicao / 2;
-    let ajusteY = (dy / distancia) * sobreposicao / 2;
+                    let ajusteX = (dx / distancia) * sobreposicao / 2;
+                    let ajusteY = (dy / distancia) * sobreposicao / 2;
 
-    a.el.setAttribute("posX", a.x - ajusteX);
-    a.el.setAttribute("posY", a.y - ajusteY);
+                    a.el.setAttribute("posX", a.x - ajusteX);
+                    a.el.setAttribute("posY", a.y - ajusteY);
 
-    b.el.setAttribute("posX", b.x + ajusteX);
-    b.el.setAttribute("posY", b.y + ajusteY);
+                    b.el.setAttribute("posX", b.x + ajusteX);
+                    b.el.setAttribute("posY", b.y + ajusteY);
 
-    aplicarComportamento(a);
-    aplicarComportamento(b);
+                    a.colidindo = true;
+                    b.colidindo = true;
 
-    a.el.setAttribute("mover", inverter(a.mover));
-    b.el.setAttribute("mover", inverter(b.mover));
+                    aplicarComportamento(a);
+                    aplicarComportamento(b);
+
+                    a.el.setAttribute("mover", inverter(a.mover));
+                    b.el.setAttribute("mover", inverter(b.mover));
                 }
             }
         }
@@ -158,6 +164,8 @@ function mesmaOrientacao(d1, d2) {
 }
 
 function aplicarComportamento(obj) {
+    if (document.getElementsByTagName(obj.tipo).length > 20) return;
+
     if (obj.comportamento === "duplicar") {
         criarForma(obj.tipo);
         criarForma(obj.tipo);
@@ -185,6 +193,26 @@ function criarForma(tipo) {
 
     document.body.appendChild(novo);
 }
+
+canvas.addEventListener("click", function(e) {
+
+    let mouseX = e.clientX;
+    let mouseY = e.clientY;
+
+    for (let a of arco) {
+        if (a.getAttribute("interacao") === "mouse") {
+            a.setAttribute("posX", mouseX);
+            a.setAttribute("posY", mouseY);
+        }
+    }
+
+    for (let r of retangulo) {
+        if (r.getAttribute("interacao") === "mouse") {
+            r.setAttribute("posX", mouseX);
+            r.setAttribute("posY", mouseY);
+        }
+    }
+});
 
 function desenharFormas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
